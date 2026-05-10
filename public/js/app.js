@@ -116,6 +116,22 @@ const App = {
     appDiv.classList.remove('hidden');
     this._setupNav();
     await this.navigate('conciliacao');
+    this._loadVersion();
+  },
+
+  async _loadVersion() {
+    try {
+      const { version } = await api.get('/api/version');
+      const el = document.getElementById('app-version');
+      if (el) el.textContent = 'v' + version;
+    } catch (_) {}
+  },
+
+  toggleSidebar() {
+    const sidebar  = document.querySelector('.sidebar');
+    const reopenBtn = document.getElementById('sidebar-reopen-btn');
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    reopenBtn.classList.toggle('hidden', !isCollapsed);
   },
 };
 

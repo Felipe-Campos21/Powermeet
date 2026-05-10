@@ -61,9 +61,17 @@
     </nav>
 
     <div class="sidebar-footer">
-      <span class="version">v1.0.0</span>
+      <button class="sidebar-toggle-btn" onclick="App.toggleSidebar()" title="Recolher menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="version" id="app-version">v1.0.0</span>
     </div>
   </aside>
+
+  <!-- Botão flutuante para reabrir sidebar -->
+  <button class="sidebar-reopen-btn hidden" id="sidebar-reopen-btn" onclick="App.toggleSidebar()" title="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
 
   <!-- Conteúdo principal -->
   <main class="main-content" id="page-content">

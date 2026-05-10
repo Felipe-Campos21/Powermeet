@@ -1,5 +1,6 @@
 const PageParametros = {
   _filtro: 'todos',
+  _busca: '',
   _lancamentos: [],
 
   // ── Helpers de lançamentos ────────────────────────────────────────────────────
@@ -72,10 +73,21 @@ const PageParametros = {
           </button>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
           <button class="btn-secondary ${filtro==='todos'   ? 'active-filter' : ''}" onclick="PageParametros._filtro='todos';App.navigate('parametros')">Todos</button>
           <button class="btn-secondary ${filtro==='global'  ? 'active-filter' : ''}"  onclick="PageParametros._filtro='global';App.navigate('parametros')">Globais</button>
           <button class="btn-secondary ${filtro==='empresa' ? 'active-filter' : ''}" onclick="PageParametros._filtro='empresa';App.navigate('parametros')">Por Empresa</button>
+          <div style="position:relative;margin-left:auto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              style="position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text-dim);pointer-events:none">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="param-busca"
+              placeholder="Buscar palavra-chave, categoria..."
+              value="${this._busca}"
+              oninput="PageParametros._onBusca(this.value)"
+              style="padding:7px 12px 7px 32px;width:260px;background:var(--surface-alt);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px" />
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -105,8 +117,9 @@ const PageParametros = {
                 const emp = p.empresa_id ? empMap[p.empresa_id] : null;
                 const lancItems = this._parseLancs(p.lancamento_contabil);
                 const lancDisplay = lancItems.map(i => this._formatLancItem(i)).filter(Boolean);
+                const searchText = [p.palavra_chave, p.categoria, emp?.nome, emp?.codigo_interno].filter(Boolean).join(' ').toLowerCase();
                 return `
-                  <tr style="${!p.ativo ? 'opacity:.4' : ''}">
+                  <tr data-search="${searchText}" style="${!p.ativo ? 'opacity:.4' : ''}">
                     <td>
                       <div style="display:flex;align-items:center;gap:8px">
                         ${ag ? `<div class="color-swatch" style="background:${ag.cor_hex}"></div>` : '<div style="width:18px"></div>'}
@@ -149,6 +162,24 @@ const PageParametros = {
         </div>
       </div>
     `;
+  },
+
+  afterRender() {
+    if (this._busca) this._aplicarBusca(this._busca);
+    const input = document.getElementById('param-busca');
+    if (input) input.focus();
+  },
+
+  _onBusca(valor) {
+    this._busca = valor;
+    this._aplicarBusca(valor);
+  },
+
+  _aplicarBusca(termo) {
+    const t = termo.toLowerCase().trim();
+    document.querySelectorAll('#page-content tbody tr[data-search]').forEach(tr => {
+      tr.style.display = (!t || tr.dataset.search.includes(t)) ? '' : 'none';
+    });
   },
 
   // ── Modal ─────────────────────────────────────────────────────────────────────

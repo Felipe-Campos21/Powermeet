@@ -244,6 +244,13 @@ function matchLinha(historico, tipoTransacao, parametros) {
 
 app.get('/api/config', (req, res) => res.json(readConfig() || {}));
 
+app.get('/api/version', (req, res) => {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+    res.json({ version: pkg.version });
+  } catch { res.json({ version: '1.0.0' }); }
+});
+
 app.post('/api/config', async (req, res) => {
   const { dbPath } = req.body;
   if (!dbPath) return res.status(400).json({ error: 'dbPath obrigatório' });

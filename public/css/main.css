@@ -153,6 +153,14 @@ html, body {
   flex-direction: column;
   padding: 24px 12px;
   gap: 4px;
+  transition: width .25s ease, min-width .25s ease, padding .25s ease, border-color .25s ease;
+  overflow: hidden;
+}
+.sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border-color: transparent;
 }
 
 .sidebar-logo {
@@ -202,8 +210,46 @@ html, body {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 .version { font-size: 11px; color: var(--text-dim); }
+
+.sidebar-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: color .15s, border-color .15s;
+}
+.sidebar-toggle-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; display: block; }
+.sidebar-toggle-btn:hover { color: var(--primary); border-color: var(--primary); }
+
+.sidebar-reopen-btn {
+  position: fixed;
+  left: 8px;
+  top: 12px;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  transition: color .15s, border-color .15s;
+}
+.sidebar-reopen-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; display: block; }
+.sidebar-reopen-btn:hover { color: var(--primary); border-color: var(--primary); }
 
 .main-content {
   flex: 1;

@@ -42,6 +42,7 @@ function createWindow() {
       nodeIntegration:  false,
     },
     title:           'PowerMeet',
+    icon:            path.join(__dirname, 'powermeet.ico'),
     show:            false,
     backgroundColor: '#0a0a14',
     frame:           true,

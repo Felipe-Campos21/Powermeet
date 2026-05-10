@@ -20,8 +20,12 @@
   "build": {
     "appId": "com.powermeet.app",
     "productName": "PowerMeet",
+    "icon": "Power Meet logo Limpa.png",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "Power Meet logo Limpa.png",
+      "signingHashAlgorithms": null,
+      "sign": null
     },
     "directories": {
       "output": "dist"
