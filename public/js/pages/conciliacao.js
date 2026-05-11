@@ -4,7 +4,7 @@ const PageConciliacao = {
   _empresaInfo: null,
   _todasFiliais: [],
   _dados: [],
-  _filtros: { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '' },
+  _filtros: { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '', pendencia: '', valorDe: '', valorAte: '' },
 
   async render() {
     const requests = [
@@ -63,6 +63,10 @@ const PageConciliacao = {
             `}
           </div>
           <div id="selector-botoes" style="display:${filialAtiva ? 'flex' : 'none'};gap:8px;align-items:center;margin-left:auto">
+            <button class="btn-primary" style="font-size:12px" onclick="PageConciliacao.abrirNovoLancamento()">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Lançamento Manual
+            </button>
             <button class="btn-secondary" id="btn-importar" onclick="App.navigate('importar')" style="font-size:13px">
               <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
               Importar Extrato
@@ -151,7 +155,22 @@ const PageConciliacao = {
             <button id="btn-subst-hist" class="filtro-btn-subst" onclick="PageConciliacao.substituirHistorico()" style="${this._filtros.historico ? '' : 'display:none'}">
               ↺ Substituir todos
             </button>
+            <div class="filtro-group">
+              <label>Buscar Pendência</label>
+              <input type="text" id="f-pend" value="${this._filtros.pendencia}" oninput="PageConciliacao.aplicarFiltros()" placeholder="Texto da pendência..." style="padding:6px 10px;font-size:12px;min-width:160px" />
+            </div>
+            <div class="filtro-group">
+              <label>Valor</label>
+              <div style="display:flex;align-items:center;gap:5px">
+                <input type="number" id="f-valor-de"  value="${this._filtros.valorDe}"  onchange="PageConciliacao.aplicarFiltros()" placeholder="De" step="0.01" style="padding:5px 8px;font-size:12px;width:90px" />
+                <span style="color:var(--text-dim);font-size:11px">até</span>
+                <input type="number" id="f-valor-ate" value="${this._filtros.valorAte}" onchange="PageConciliacao.aplicarFiltros()" placeholder="Até" step="0.01" style="padding:5px 8px;font-size:12px;width:90px" />
+              </div>
+            </div>
             <button class="filtro-btn-clear" onclick="PageConciliacao.limparFiltros()">✕ Limpar</button>
+            <button class="filtro-btn-copiar" onclick="PageConciliacao.copiarParaNotebook()" title="Copia Data, Histórico, Valor e Tipo dos lançamentos visíveis para a área de transferência">
+              ⎘ Copiar Lançamentos
+            </button>
             <div style="margin-left:auto;font-size:12px;color:var(--text-muted);align-self:center" id="contagem-label"></div>
           </div>
 
@@ -247,7 +266,7 @@ const PageConciliacao = {
     this._empresaId = id;
     this._filialId = null;
     this._dados = [];
-    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '' };
+    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '', pendencia: '', valorDe: '', valorAte: '' };
     App.setFilialAtiva(null);
     await this._rerender();
   },
@@ -356,6 +375,9 @@ const PageConciliacao = {
       if (f.dataDe    && r.data < f.dataDe)                   return false;
       if (f.dataAte   && r.data > f.dataAte)                  return false;
       if (f.historico && !(r.historico || '').toLowerCase().includes(f.historico.toLowerCase())) return false;
+      if (f.pendencia && !(r.pendencia || '').toLowerCase().includes(f.pendencia.toLowerCase())) return false;
+      if (f.valorDe  !== '' && r.valor < parseFloat(f.valorDe))  return false;
+      if (f.valorAte !== '' && r.valor > parseFloat(f.valorAte)) return false;
       return true;
     });
   },
@@ -440,6 +462,11 @@ const PageConciliacao = {
               placeholder="Observação..."
             >${pendEsc}</textarea>
           </td>
+          <td style="text-align:center;padding:0 4px">
+            <button class="btn-excluir-row" onclick="PageConciliacao.excluirLancamento(${r.id})" title="Excluir lançamento">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+            </button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -449,7 +476,7 @@ const PageConciliacao = {
         <thead>
           <tr>
             <th class="th-group th-group-extrato" colspan="6">Lançamento de Extrato</th>
-            <th class="th-group th-group-conciliacao" colspan="4">Lançamento Contábil</th>
+            <th class="th-group th-group-conciliacao" colspan="5">Lançamento Contábil</th>
           </tr>
           <tr>
             <th style="width:6px;padding:0"></th>
@@ -462,6 +489,7 @@ const PageConciliacao = {
             <th style="width:120px">Situação</th>
             <th style="width:46px;text-align:center">Anx</th>
             <th style="width:200px">Pendência</th>
+            <th style="width:36px;padding:0"></th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -471,7 +499,7 @@ const PageConciliacao = {
 
   async trocarFilial(id) {
     this._filialId = id || null;
-    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '' };
+    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '', pendencia: '', valorDe: '', valorAte: '' };
     App.setFilialAtiva(id);
     await this._rerender();
   },
@@ -489,7 +517,10 @@ const PageConciliacao = {
     this._filtros.situacao  = document.getElementById('f-sit')?.value     || '';
     this._filtros.dataDe    = document.getElementById('f-data-de')?.value  || '';
     this._filtros.dataAte   = document.getElementById('f-data-ate')?.value || '';
-    this._filtros.historico = document.getElementById('f-hist')?.value     || '';
+    this._filtros.historico = document.getElementById('f-hist')?.value      || '';
+    this._filtros.pendencia = document.getElementById('f-pend')?.value      || '';
+    this._filtros.valorDe   = document.getElementById('f-valor-de')?.value  || '';
+    this._filtros.valorAte  = document.getElementById('f-valor-ate')?.value || '';
     const btnSubst = document.getElementById('btn-subst-hist');
     if (btnSubst) btnSubst.style.display = this._filtros.historico ? '' : 'none';
     this._atualizarTabela();
@@ -497,8 +528,8 @@ const PageConciliacao = {
   },
 
   limparFiltros() {
-    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '' };
-    ['f-cat','f-mes','f-ano','f-tipo','f-sit','f-data-de','f-data-ate','f-hist'].forEach(id => {
+    this._filtros = { categoria: '', mes: '', ano: '', situacao: '', tipo: '', dataDe: '', dataAte: '', historico: '', pendencia: '', valorDe: '', valorAte: '' };
+    ['f-cat','f-mes','f-ano','f-tipo','f-sit','f-data-de','f-data-ate','f-hist','f-pend','f-valor-de','f-valor-ate'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -580,6 +611,7 @@ const PageConciliacao = {
     // Atualiza indicadores de progresso
     this._atualizarIndicadoresParcial();
     this._atualizarIndicadorTotal();
+    this._atualizarMensalIndicador();
   },
 
   _atualizarIndicadorTotal() {
@@ -596,6 +628,45 @@ const PageConciliacao = {
       <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
       <div class="ind-detail">${conc} de ${total} item(ns)</div>
     `;
+  },
+
+  _atualizarMensalIndicador() {
+    const container = document.getElementById('ind-container');
+    if (!container) return;
+    const cards = container.querySelectorAll('.indicador-card');
+    if (!cards[2]) return;
+
+    const meses = {};
+    for (const r of this._dados) {
+      const key = `${r.ano}-${String(r.mes).padStart(2,'0')}`;
+      if (!meses[key]) meses[key] = { mes: r.mes, ano: r.ano, total: 0, conciliados: 0 };
+      meses[key].total++;
+      if (r.situacao === 'conciliado') meses[key].conciliados++;
+    }
+
+    const ordenado = Object.values(meses).sort((a, b) =>
+      a.ano !== b.ano ? a.ano - b.ano : a.mes - b.mes
+    );
+
+    const rows = cards[2].querySelectorAll('.mensal-row');
+    ordenado.forEach((m, i) => {
+      if (!rows[i]) return;
+      const pct = m.total > 0 ? Math.round((m.conciliados / m.total) * 100) : 0;
+      const barFill = rows[i].querySelector('.mensal-bar-fill');
+      const pctSpan = rows[i].querySelector('.mensal-pct');
+      if (barFill) barFill.style.width = pct + '%';
+      if (pctSpan) pctSpan.textContent = pct + '%';
+    });
+  },
+
+  async excluirLancamento(id) {
+    if (!confirm('Excluir este lançamento?')) return;
+    await api.del(`/api/extrato/${id}`);
+    this._dados = this._dados.filter(d => d.id !== id);
+    this._atualizarTabela();
+    this._atualizarIndicadorTotal();
+    this._atualizarMensalIndicador();
+    toast('Lançamento excluído', 'success');
   },
 
   async salvarCampo(id, campo, valor) {
@@ -684,6 +755,87 @@ const PageConciliacao = {
     document.getElementById('modal-anexos')?.remove();
   },
 
+  abrirNovoLancamento() {
+    if (!this._filialId) return;
+    const hoje = new Date().toISOString().slice(0, 10);
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="modal-bg" id="modal-novo-lanc" onclick="if(event.target.id==='modal-novo-lanc')PageConciliacao.fecharNovoLancamento()">
+        <div class="modal" style="max-width:420px">
+          <div class="modal-header">
+            <span class="modal-title">Novo Lançamento Manual</span>
+            <button class="modal-close" onclick="PageConciliacao.fecharNovoLancamento()">×</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px;padding:4px 0">
+            <div class="filtro-group" style="flex-direction:column;align-items:flex-start">
+              <label style="margin-bottom:4px">Data</label>
+              <input type="date" id="nl-data" value="${hoje}" style="padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box" />
+            </div>
+            <div class="filtro-group" style="flex-direction:column;align-items:flex-start">
+              <label style="margin-bottom:4px">Histórico</label>
+              <input type="text" id="nl-hist" placeholder="Descrição do lançamento..." style="padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box" />
+            </div>
+            <div style="display:flex;gap:12px">
+              <div class="filtro-group" style="flex-direction:column;align-items:flex-start;flex:1">
+                <label style="margin-bottom:4px">Valor</label>
+                <input type="number" id="nl-valor" placeholder="0,00" step="0.01" min="0" style="padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box" />
+              </div>
+              <div class="filtro-group" style="flex-direction:column;align-items:flex-start;flex:1">
+                <label style="margin-bottom:4px">Tipo</label>
+                <select id="nl-tipo" style="padding:7px 10px;font-size:13px;width:100%">
+                  <option value="subtrai">↓ Subtrai (saída)</option>
+                  <option value="soma">↑ Soma (entrada)</option>
+                </select>
+              </div>
+            </div>
+            <div class="filtro-group" style="flex-direction:column;align-items:flex-start">
+              <label style="margin-bottom:4px">Documento <span style="font-weight:400;color:var(--text-dim)">(opcional)</span></label>
+              <input type="text" id="nl-doc" placeholder="NF / contrato..." style="padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box" />
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+            <button class="btn-secondary" onclick="PageConciliacao.fecharNovoLancamento()">Cancelar</button>
+            <button class="btn-primary" onclick="PageConciliacao.confirmarNovoLancamento()">Adicionar Lançamento</button>
+          </div>
+        </div>
+      </div>
+    `);
+    setTimeout(() => document.getElementById('nl-hist')?.focus(), 50);
+  },
+
+  fecharNovoLancamento() {
+    document.getElementById('modal-novo-lanc')?.remove();
+  },
+
+  async confirmarNovoLancamento() {
+    const data    = document.getElementById('nl-data')?.value;
+    const hist    = document.getElementById('nl-hist')?.value.trim();
+    const valor   = parseFloat(document.getElementById('nl-valor')?.value);
+    const tipo    = document.getElementById('nl-tipo')?.value;
+    const doc     = document.getElementById('nl-doc')?.value.trim();
+
+    if (!data)        { toast('Informe a data',       'warning'); return; }
+    if (!hist)        { toast('Informe o histórico',  'warning'); return; }
+    if (isNaN(valor) || valor < 0) { toast('Informe um valor válido', 'warning'); return; }
+
+    const r = await api.post('/api/extrato/importar', {
+      filial_banco_id: this._filialId,
+      linhas: [{ data, historico: hist, valor, tipo_transacao: tipo }],
+    });
+
+    if (doc) {
+      const dados = await api.get(`/api/extrato?filial_banco_id=${this._filialId}`);
+      const ultimo = dados.reduce((m, x) => x.id > m.id ? x : m, { id: 0 });
+      if (ultimo.id) await api.put(`/api/extrato/${ultimo.id}`, { documento: doc });
+    }
+
+    this.fecharNovoLancamento();
+    toast(`Lançamento adicionado${r.identificadas ? ' e identificado automaticamente' : ''}`, 'success');
+    await this._carregarDados();
+    this._atualizarOpçoesFiltro();
+    this._atualizarTabela();
+    this._atualizarIndicadores();
+  },
+
   async uploadAnexo(extratoId, input) {
     const file = input.files[0];
     if (!file) return;
@@ -764,6 +916,24 @@ const PageConciliacao = {
     await this._carregarDados();
     this._atualizarTabela();
     this._atualizarIndicadores();
+  },
+
+  copiarParaNotebook() {
+    const vis = this._dadosVisiveis();
+    if (!vis.length) { toast('Nenhum lançamento visível para copiar', 'warning'); return; }
+
+    const linhas = ['Data\tHistórico\tValor\tTipo'];
+    for (const r of vis) {
+      const data    = formatarData(r.data);
+      const hist    = (r.historico || '').replace(/\t/g, ' ').replace(/\n/g, ' ');
+      const valor   = formatarValor(r.valor);
+      const tipo    = r.tipo_transacao === 'soma' ? 'Soma' : 'Subtrai';
+      linhas.push(`${data}\t${hist}\t${valor}\t${tipo}`);
+    }
+
+    navigator.clipboard.writeText(linhas.join('\n'))
+      .then(() => toast(`${vis.length} lançamento(s) copiado(s) para a área de transferência`, 'success'))
+      .catch(() => toast('Não foi possível copiar. Tente novamente.', 'error'));
   },
 
   // Chamado ao entrar na página

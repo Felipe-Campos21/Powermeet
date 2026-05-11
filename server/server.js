@@ -510,6 +510,13 @@ app.delete('/api/extrato', async (req, res) => {
   res.json({ removidas: r.changes });
 });
 
+app.delete('/api/extrato/:id', async (req, res) => {
+  const d = await getDb(); if (!d) return res.status(503).json({ error: 'DB não configurado' });
+  dbRun('DELETE FROM anexos WHERE extrato_id=?', [req.params.id]);
+  dbRun('DELETE FROM extrato WHERE id=?', [req.params.id]);
+  res.json({ ok: true });
+});
+
 // ── Logos de Banco ────────────────────────────────────────────────────────────
 
 app.get('/api/bancos/logo/:codigo', async (req, res) => {

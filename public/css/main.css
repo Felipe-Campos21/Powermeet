@@ -549,6 +549,21 @@ td.cor-stripe {
 .btn-attach:hover { color: var(--primary); border-color: var(--border); }
 .btn-attach.has-attach { color: var(--primary); }
 
+.btn-excluir-row {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  transition: all .15s;
+  opacity: 0;
+}
+tr:hover .btn-excluir-row { opacity: 1; }
+.btn-excluir-row:hover { color: var(--danger); border-color: var(--danger); background: rgba(255,80,80,.08); }
+
 .attach-count {
   font-size: 10px;
   font-weight: 700;
@@ -791,6 +806,19 @@ td.cor-stripe {
   transition: all .15s;
 }
 .filtro-btn-clear:hover { color: var(--danger); border-color: var(--danger); }
+
+.filtro-btn-copiar {
+  align-self: flex-end;
+  background: rgba(0, 200, 120, 0.08);
+  border: 1px solid rgba(0, 200, 120, 0.3);
+  color: #00c878;
+  border-radius: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.filtro-btn-copiar:hover { background: rgba(0, 200, 120, 0.18); border-color: #00c878; }
 
 .filtro-btn-subst {
   align-self: flex-end;
